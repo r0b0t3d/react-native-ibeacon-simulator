@@ -48,7 +48,7 @@ RCT_EXPORT_METHOD(stopSharedAdvertisingBeacon)
     [self createBeaconRegionWithString:uuid major:major minor:minor identifier:identifier];
 
   if (!self.peripheralManager)
-      self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil options:nil];
+      self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil options: @{CBPeripheralManagerOptionShowPowerAlertKey: @NO}];
 
   [self turnOnAdvertising];
 }
@@ -95,9 +95,6 @@ RCT_EXPORT_METHOD(stopSharedAdvertisingBeacon)
     UInt16 major = [self.beaconRegion.major unsignedShortValue];
     UInt16 minor = [self.beaconRegion.minor unsignedShortValue];
     
-    NSLog(@"Minor HHAHHAHAHHAHAHAHHAHAHHA: %d", minor);
-    
-    
     CLBeaconRegion *region = [[CLBeaconRegion alloc] initWithProximityUUID:self.beaconRegion.proximityUUID
                                                                 major: major
                                                                 minor: minor
@@ -134,3 +131,4 @@ RCT_EXPORT_METHOD(stopSharedAdvertisingBeacon)
 
 
 @end
+ 
