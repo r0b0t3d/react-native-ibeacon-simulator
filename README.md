@@ -8,7 +8,7 @@ npm install --save https://github.com/ntvinhit/react-native-ibeacon-simulator.gi
 or with yarn
 
 ```
-yarn add 
+yarn add https://github.com/ntvinhit/react-native-ibeacon-simulator.git
 ```
 
 Please don't try to use react-native link at your RN 0.60.X project
