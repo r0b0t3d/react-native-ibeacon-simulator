@@ -6,7 +6,7 @@ import * as Types from './types'
 
 const NativeBeaconBroadcast = NativeModules.BeaconBroadcast
 
-export async function startAdvertisingBeaconWithString(args: Types.StartBeaconArgs): Promise<boolean> {
+async function startAdvertisingBeaconWithString(args: Types.StartBeaconArgs): Promise<boolean> {
   if (Platform.OS === 'android') {
     args = {
       ...args,
@@ -18,26 +18,25 @@ export async function startAdvertisingBeaconWithString(args: Types.StartBeaconAr
   return NativeBeaconBroadcast.startSharedAdvertisingBeaconWithString(args)
 }
 
-export function stopAdvertisingBeacon(): boolean {
+function stopAdvertisingBeacon(): boolean {
   return NativeBeaconBroadcast.stopSharedAdvertisingBeacon()
 }
 
-export function isStarted(): boolean {
-  if (Platform === 'ios') return true
+function isStarted(): boolean {
+  if (Platform.OS === 'ios') return true
   return NativeBeaconBroadcast.isStarted()
 }
 
-export function checkTransmissionSupported(): boolean {
-  if (Platform === 'ios') return true
+function checkTransmissionSupported(): boolean {
+  if (Platform.OS === 'ios') return true
   const status = NativeBeaconBroadcast.checkTransmissionSupported() === Types.AndroidSupportedStatuses.SUPPORTED
   return status
 }
 
-export * from './types'
-
-export default {
+export {
   startAdvertisingBeaconWithString,
   stopAdvertisingBeacon,
   isStarted,
   checkTransmissionSupported,
-};
+  Types,
+}
