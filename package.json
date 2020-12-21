@@ -27,6 +27,7 @@
     "url": "https://github.com/maxiru/react-native-ibeacon-simulator/issues"
   },
   "homepage": "https://github.com/maxiru/react-native-ibeacon-simulator#readme",
-  "react-native": "src/index.ts",
-  "types": "src/types.ts"
+  "main": "./src/index.ts",
+  "react-native": "./src/index.ts",
+  "types": "./src/types.ts"
 }
