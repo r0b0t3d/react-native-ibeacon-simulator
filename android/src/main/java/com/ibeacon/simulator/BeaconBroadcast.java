@@ -72,9 +72,8 @@ public class BeaconBroadcast extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public int checkTransmissionSupported() {
-        int result = BeaconTransmitter.checkTransmissionSupported(context);
-        return result;
+    public void checkTransmissionSupported(Promise promise) {
+        promise.resolve(BeaconTransmitter.checkTransmissionSupported(context));
     }
 
     @ReactMethod
@@ -144,5 +143,6 @@ public class BeaconBroadcast extends ReactContextBaseJavaModule {
                 return false;
             }
         }
+        return true;
     }
 }

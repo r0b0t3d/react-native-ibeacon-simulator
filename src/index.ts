@@ -27,9 +27,9 @@ function isStarted(): boolean {
   return NativeBeaconBroadcast.isStarted()
 }
 
-function checkTransmissionSupported(): boolean {
+async function checkTransmissionSupported(): Promise<boolean> {
   if (Platform.OS === 'ios') return true
-  const status = NativeBeaconBroadcast.checkTransmissionSupported() === Types.AndroidSupportedStatuses.SUPPORTED
+  const status = await NativeBeaconBroadcast.checkTransmissionSupported() === Types.AndroidSupportedStatuses.SUPPORTED
   return status
 }
 
