@@ -22,7 +22,7 @@ function stopAdvertisingBeacon(): boolean {
   return NativeBeaconBroadcast.stopSharedAdvertisingBeacon()
 }
 
-function isStarted(): boolean {
+async function isStarted(): Promise<boolean> {
   return NativeBeaconBroadcast.isStarted()
 }
 

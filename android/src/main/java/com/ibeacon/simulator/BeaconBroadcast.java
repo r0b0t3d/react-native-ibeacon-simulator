@@ -77,11 +77,11 @@ public class BeaconBroadcast extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public boolean isStarted() {
+    public void isStarted(Promise promise) {
         if (beaconTransmitter != null) {
-            return beaconTransmitter.isStarted();
+            promise.resolve(beaconTransmitter.isStarted());
         }
-        return false;
+        promise.resolve(false);
     }
 
     @ReactMethod
