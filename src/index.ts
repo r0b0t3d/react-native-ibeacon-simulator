@@ -23,14 +23,20 @@ function stopAdvertisingBeacon(): boolean {
 }
 
 function isStarted(): boolean {
-  if (Platform.OS === 'ios') return true
   return NativeBeaconBroadcast.isStarted()
 }
 
 async function checkTransmissionSupported(): Promise<boolean> {
-  if (Platform.OS === 'ios') return true
-  const status = await NativeBeaconBroadcast.checkTransmissionSupported() === Types.AndroidSupportedStatuses.SUPPORTED
-  return status
+  return Platform.select({
+    android: async () => {
+      const checkStatus = await NativeBeaconBroadcast.checkTransmissionSupported()
+      return (checkStatus !== Types.AndroidSupportedStatuses.NOT_SUPPORTED_BLE && 
+        checkStatus !== Types.AndroidSupportedStatuses.NOT_SUPPORTED_MIN_SDK)
+    },
+    ios: async () => {
+      return Boolean(await NativeBeaconBroadcast.checkTransmissionSupported())
+    }
+  })()
 }
 
 export {
