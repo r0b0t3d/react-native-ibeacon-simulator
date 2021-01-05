@@ -62,7 +62,7 @@ RCT_EXPORT_METHOD(checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rej
 
     [self createBeaconRegionWithString:uuid major:major minor:minor identifier:identifier];
     if (!self.peripheralManager)
-        self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil options: @{CBPeripheralManagerOptionShowPowerAlertKey: @NO}];
+        self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil options: @{CBPeripheralManagerOptionShowPowerAlertKey: @YES}];
     [self turnOnAdvertising];
 }
 
