@@ -1,6 +1,6 @@
 {
-  "name": "@ntvinhit/react-native-ibeacon-simulator",
-  "version": "2.0.1",
+  "name": "@maxiru/react-native-ibeacon-simulator",
+  "version": "2.1.0",
   "description": "A cool package for simulate your iOS devices as beacon (compatible with RN 0.59.x)",
   "author": "William Tran <chitran.whitecat@gmail.com>",
   "contributors": [
@@ -13,7 +13,7 @@
   "nativePackage": true,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ntvinhit/react-native-ibeacon-simulator.git"
+    "url": "git+https://github.com/maxiru/react-native-ibeacon-simulator.git"
   },
   "keywords": [
     "react-native",
@@ -24,7 +24,9 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ntvinhit/react-native-ibeacon-simulator/issues"
+    "url": "https://github.com/maxiru/react-native-ibeacon-simulator/issues"
   },
-  "homepage": "https://github.com/ntvinhit/react-native-ibeacon-simulator#readme"
+  "homepage": "https://github.com/maxiru/react-native-ibeacon-simulator#readme",
+  "main": "src/index.ts",
+  "react-native": "src/index.ts"
 }

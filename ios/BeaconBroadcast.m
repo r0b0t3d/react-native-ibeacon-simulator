@@ -5,25 +5,35 @@
 @property (nonatomic, strong) CLLocationManager *locationManager;
 @property (nonatomic, strong) CLBeaconRegion *beaconRegion;
 @property (nonatomic, strong) CBPeripheralManager *peripheralManager;
-
+@property (nonatomic, strong) void (^resolve)(NSNumber* status);
+@property (nonatomic, strong) void (^reject)(NSError *error);
 @end
 
 @implementation BeaconBroadcast
 
 RCT_EXPORT_MODULE()
 
-RCT_EXPORT_METHOD(startSharedAdvertisingBeaconWithString:(NSString *)uuid major:(int)major minor:(int)minor identifier:(NSString *)identifier)
+RCT_EXPORT_METHOD(startSharedAdvertisingBeaconWithString:(NSDictionary*)args)
 {
-    [[BeaconBroadcast sharedInstance] startAdvertisingBeaconWithString: uuid major: major minor: minor identifier: identifier];
+    [[BeaconBroadcast sharedInstance] _startAdvertisingBeaconWithString: args];
 }
 
 RCT_EXPORT_METHOD(stopSharedAdvertisingBeacon)
 {
-    [[BeaconBroadcast sharedInstance] stopAdvertisingBeacon];
+    [[BeaconBroadcast sharedInstance] _stopAdvertisingBeacon];
+}
+
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(isStarted)
+{
+    return @([[BeaconBroadcast sharedInstance] _isStarted]);
+}
+
+RCT_EXPORT_METHOD(checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+{
+    [[BeaconBroadcast sharedInstance] _checkTransmissionSupported: resolve rejecter: reject];
 }
 
 #pragma mark - Common
-
 + (id)sharedInstance
 {
     // structure used to test whether the block has completed or not
@@ -41,25 +51,43 @@ RCT_EXPORT_METHOD(stopSharedAdvertisingBeacon)
     return _sharedObject;
 }
 
-- (void)startAdvertisingBeaconWithString:(NSString *)uuid major:(int)major minor:(int)minor identifier:(NSString *)identifier
+- (void)_startAdvertisingBeaconWithString:(NSDictionary *)args
 {
-  NSLog(@"Turning on advertising...");
+    NSLog(@"Turning on advertising.");
+
+    NSString *uuid = [args objectForKey:@"uuid"];
+    NSNumber *major = [args objectForKey:@"major"];
+    NSNumber *minor = [args objectForKey:@"minor"];
+    NSString *identifier = [args objectForKey:@"identifier"];
 
     [self createBeaconRegionWithString:uuid major:major minor:minor identifier:identifier];
-
-  if (!self.peripheralManager)
-      self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil options: @{CBPeripheralManagerOptionShowPowerAlertKey: @NO}];
-
-  [self turnOnAdvertising];
+    if (!self.peripheralManager)
+        self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil options: @{CBPeripheralManagerOptionShowPowerAlertKey: @YES}];
+    [self turnOnAdvertising];
 }
 
-- (void)stopAdvertisingBeacon
+- (void)_stopAdvertisingBeacon
 {
    if ([self.peripheralManager isAdvertising]) {
         [self.peripheralManager stopAdvertising];
     }
 
-  NSLog(@"Turned off advertising.");
+   NSLog(@"Turned off advertising.");
+}
+
+- (BOOL)_isStarted {
+    if (!self.peripheralManager) return false;
+    return [self.peripheralManager isAdvertising];
+}
+
+- (void)_checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    if (!self.peripheralManager) {
+        self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil options: @{CBPeripheralManagerOptionShowPowerAlertKey: @NO}];
+        _resolve = resolve;
+    } else {
+        resolve(@(self.peripheralManager.state != CBPeripheralManagerStateUnknown &&
+                self.peripheralManager.state != CBPeripheralManagerStateUnsupported));
+    }
 }
 
 - (void)createBeaconRegionWithString:(NSString *)uuid major:(int)major minor:(int)minor identifier:(NSString *)identifier
@@ -91,7 +119,7 @@ RCT_EXPORT_METHOD(stopSharedAdvertisingBeacon)
 
     time_t t;
     srand((unsigned) time(&t));
-    
+
     UInt16 major = [self.beaconRegion.major unsignedShortValue];
     UInt16 minor = [self.beaconRegion.minor unsignedShortValue];
     
@@ -101,7 +129,7 @@ RCT_EXPORT_METHOD(stopSharedAdvertisingBeacon)
                                                                 identifier:self.beaconRegion.identifier];
     NSDictionary *beaconPeripheralData = [region peripheralDataWithMeasuredPower:nil];
     [self.peripheralManager startAdvertising:beaconPeripheralData];
-
+    
     NSLog(@"Turning on advertising for region: %@.", region);
 }
 
@@ -112,7 +140,7 @@ RCT_EXPORT_METHOD(stopSharedAdvertisingBeacon)
         NSLog(@"Couldn't turn on advertising: %@", error);
         return;
     }
-
+    
     if (peripheralManager.isAdvertising) {
         NSLog(@"Turned on advertising.");
     }
@@ -120,15 +148,19 @@ RCT_EXPORT_METHOD(stopSharedAdvertisingBeacon)
 
 - (void)peripheralManagerDidUpdateState:(CBPeripheralManager *)peripheralManager
 {
+    if (_resolve) {
+        _resolve(@(peripheralManager.state != CBPeripheralManagerStateUnknown &&
+                 peripheralManager.state != CBPeripheralManagerStateUnsupported));
+        _resolve = nil;
+    }
     if (peripheralManager.state != CBPeripheralManagerStatePoweredOn) {
         NSLog(@"Peripheral manager is off.");
         return;
     }
-
+    
     NSLog(@"Peripheral manager is on.");
     [self turnOnAdvertising];
 }
 
 
 @end
- 

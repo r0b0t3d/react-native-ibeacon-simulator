@@ -1,59 +1,45 @@
-
 package com.ibeacon.simulator;
 
 import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseSettings;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.os.RemoteException;
-import android.support.annotation.Nullable;
+import android.os.Build;
 import android.util.Log;
 
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.bridge.Callback;
-import com.facebook.react.bridge.Arguments;
-import com.facebook.react.bridge.ReactContext;
-import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.bridge.WritableArray;
-import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.bridge.WritableNativeArray;
-import com.facebook.react.bridge.WritableNativeMap;
-import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import org.altbeacon.beacon.Beacon;
-import org.altbeacon.beacon.BeaconConsumer;
-import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.BeaconParser;
 import org.altbeacon.beacon.BeaconTransmitter;
-import org.altbeacon.beacon.RangeNotifier;
-import org.altbeacon.beacon.Region;
-import org.altbeacon.beacon.startup.BootstrapNotifier;
 
-import java.io.Console;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 
 public class BeaconBroadcast extends ReactContextBaseJavaModule {
     private static final String TAG = "BeaconBroadcast";
-    private final ReactApplicationContext context;
-    private static android.content.Context applicationContext;
+
     private static final String SUPPORTED = "SUPPORTED";
     private static final String NOT_SUPPORTED_MIN_SDK = "NOT_SUPPORTED_MIN_SDK";
     private static final String NOT_SUPPORTED_BLE = "NOT_SUPPORTED_BLE";
     private static final String NOT_SUPPORTED_CANNOT_GET_ADVERTISER_MULTIPLE_ADVERTISEMENTS = "NOT_SUPPORTED_CANNOT_GET_ADVERTISER_MULTIPLE_ADVERTISEMENTS";
     private static final String NOT_SUPPORTED_CANNOT_GET_ADVERTISER = "NOT_SUPPORTED_CANNOT_GET_ADVERTISER";
+
+    private static final String ADVERTISE_MODE_LOW_POWER = "ADVERTISE_MODE_LOW_POWER";
+    private static final String ADVERTISE_MODE_BALANCED = "ADVERTISE_MODE_BALANCED";
+    private static final String ADVERTISE_MODE_LOW_LATENCY = "ADVERTISE_MODE_LOW_LATENCY";
+
+    private static final String ADVERTISE_TX_POWER_ULTRA_LOW = "ADVERTISE_TX_POWER_ULTRA_LOW";
+    private static final String ADVERTISE_TX_POWER_LOW = "ADVERTISE_TX_POWER_LOW";
+    private static final String ADVERTISE_TX_POWER_MEDIUM = "ADVERTISE_TX_POWER_MEDIUM";
+    private static final String ADVERTISE_TX_POWER_HIGH = "ADVERTISE_TX_POWER_HIGH";
+
+    private static android.content.Context applicationContext;
     private static BeaconTransmitter beaconTransmitter = null;
+    private final ReactApplicationContext context;
 
     public BeaconBroadcast(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -68,6 +54,15 @@ public class BeaconBroadcast extends ReactContextBaseJavaModule {
         constants.put(NOT_SUPPORTED_BLE, BeaconTransmitter.NOT_SUPPORTED_BLE);
         constants.put(NOT_SUPPORTED_CANNOT_GET_ADVERTISER_MULTIPLE_ADVERTISEMENTS, BeaconTransmitter.NOT_SUPPORTED_CANNOT_GET_ADVERTISER_MULTIPLE_ADVERTISEMENTS);
         constants.put(NOT_SUPPORTED_CANNOT_GET_ADVERTISER, BeaconTransmitter.NOT_SUPPORTED_CANNOT_GET_ADVERTISER);
+
+        constants.put(ADVERTISE_MODE_LOW_POWER, AdvertiseSettings.ADVERTISE_MODE_LOW_POWER);
+        constants.put(ADVERTISE_MODE_BALANCED, AdvertiseSettings.ADVERTISE_MODE_BALANCED);
+        constants.put(ADVERTISE_MODE_LOW_LATENCY, AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY);
+
+        constants.put(ADVERTISE_TX_POWER_ULTRA_LOW, AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW);
+        constants.put(ADVERTISE_TX_POWER_LOW, AdvertiseSettings.ADVERTISE_TX_POWER_LOW);
+        constants.put(ADVERTISE_TX_POWER_MEDIUM, AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM);
+        constants.put(ADVERTISE_TX_POWER_HIGH, AdvertiseSettings.ADVERTISE_TX_POWER_HIGH);
         return constants;
     }
 
@@ -77,13 +72,28 @@ public class BeaconBroadcast extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void checkTransmissionSupported(Callback cb) {
-        int result = BeaconTransmitter.checkTransmissionSupported(context);
-        cb.invoke(result);
+    public void checkTransmissionSupported(Promise promise) {
+        promise.resolve(BeaconTransmitter.checkTransmissionSupported(context));
     }
 
     @ReactMethod
-    public void startSharedAdvertisingBeaconWithString(String uuid, int major, int minor, String identifier, Callback onError) {
+    public void isStarted(Promise promise) {
+        if (beaconTransmitter != null) {
+            promise.resolve(beaconTransmitter.isStarted());
+        }
+        promise.resolve(false);
+    }
+
+    @ReactMethod
+    public void startSharedAdvertisingBeaconWithString(ReadableMap args, final Promise promise) {
+        String uuid = args.getString("uuid");
+        int major = args.getInt("major");
+        int minor = args.getInt("minor");
+        String identifier = args.getString("identifier");
+        int txPower = args.getInt("txPower");
+        int advertiseMode = args.getInt("advertiseMode");
+        int advertiseTxPowerLevel = args.getInt("advertiseTxPowerLevel");
+
         int manufacturer = 0x4C;
         try {
             Beacon beacon = new Beacon.Builder()
@@ -92,38 +102,47 @@ public class BeaconBroadcast extends ReactContextBaseJavaModule {
                     .setId3(String.valueOf(minor))
                     .setManufacturer(manufacturer)
                     .setBluetoothName(identifier)
-                    .setTxPower(-56)
+                    .setTxPower(txPower)
                     .build();
             BeaconParser beaconParser = new BeaconParser()
                     .setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24");
 
-            this.beaconTransmitter = new BeaconTransmitter(context, beaconParser);
-            this.beaconTransmitter.setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY);
-            this.beaconTransmitter.setAdvertiseTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH);
-            this.beaconTransmitter.startAdvertising(beacon, new AdvertiseCallback() {
+            beaconTransmitter = new BeaconTransmitter(context, beaconParser);
+            beaconTransmitter.setAdvertiseMode(advertiseMode);
+            beaconTransmitter.setAdvertiseTxPowerLevel(advertiseTxPowerLevel);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                beaconTransmitter.startAdvertising(beacon, new AdvertiseCallback() {
+                    @Override
+                    public void onStartFailure(int errorCode) {
+                        String errorMessage = "Error on start advertising " + errorCode;
+                        Log.e(TAG, errorMessage);
+                        promise.reject(String.valueOf(errorCode), errorMessage);
+                    }
 
-                @Override
-                public void onStartFailure(int errorCode) {
-                    Log.d("ReactNative", "Error from start advertising " + errorCode);
-                }
-
-                @Override
-                public void onStartSuccess(AdvertiseSettings settingsInEffect) {
-                    Log.d("ReactNative", "Success start advertising");
-                }
-            });
+                    @Override
+                    public void onStartSuccess(AdvertiseSettings settingsInEffect) {
+                        String successMessage = "Success on start advertising " + settingsInEffect.toString();
+                        Log.d(TAG, successMessage);
+                        promise.resolve(true);
+                    }
+                });
+            }
         } catch (Exception ex) {
-            onError.invoke(ex.getMessage());
+            promise.reject(ex);
         }
     }
 
     @ReactMethod
-    public void stopSharedAdvertisingBeacon() {
-        if (this.beaconTransmitter != null) {
+    public boolean stopSharedAdvertisingBeacon() {
+        if (beaconTransmitter != null) {
             try {
-                this.beaconTransmitter.stopAdvertising();
+                beaconTransmitter.stopAdvertising();
+                return true;
             } catch (Exception ex) {
+                Log.e(TAG, "Error on stop advertising ", ex);
+                return false;
             }
         }
+        return true;
     }
 }
