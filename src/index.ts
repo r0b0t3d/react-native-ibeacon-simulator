@@ -6,8 +6,6 @@ import * as Types from './types'
 
 const NativeBeaconBroadcast = NativeModules.BeaconBroadcast
 
-const isWorking = false
-
 async function startAdvertisingBeaconWithString(args: Types.StartBeaconArgs): Promise<boolean> {
   if (Platform.OS === 'android') {
     const defaultValues = {
