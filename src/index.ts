@@ -8,11 +8,14 @@ const NativeBeaconBroadcast = NativeModules.BeaconBroadcast
 
 async function startAdvertisingBeaconWithString(args: Types.StartBeaconArgs): Promise<boolean> {
   if (Platform.OS === 'android') {
-    args = {
-      ...args,
+    const defaultValues = {
       txPower: -56, 
-      advertiseMode: Types.AndroidAdvertiseMode.ADVERTISE_MODE_LOW_POWER,
+      advertiseMode: Types.AndroidAdvertiseMode.ADVERTISE_MODE_BALANCED,
       advertiseTxPowerLevel: Types.AndroidAdvertiseTx.ADVERTISE_TX_POWER_MEDIUM
+    }
+    args = {
+      ...defaultValues,
+      ...args
     }
   }
   return NativeBeaconBroadcast.startSharedAdvertisingBeaconWithString(args)
