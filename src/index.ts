@@ -6,12 +6,14 @@ import * as Types from './types'
 
 const NativeBeaconBroadcast = NativeModules.BeaconBroadcast
 
+const isWorking = false
+
 async function startAdvertisingBeaconWithString(args: Types.StartBeaconArgs): Promise<boolean> {
   if (Platform.OS === 'android') {
     args = {
       ...args,
       txPower: -56, 
-      advertiseMode: Types.AndroidAdvertiseMode.ADVERTISE_MODE_LOW_POWER,
+      advertiseMode: Types.AndroidAdvertiseMode.ADVERTISE_MODE_BALANCED,
       advertiseTxPowerLevel: Types.AndroidAdvertiseTx.ADVERTISE_TX_POWER_MEDIUM
     }
   }
