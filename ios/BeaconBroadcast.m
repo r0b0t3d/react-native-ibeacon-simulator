@@ -4,6 +4,7 @@
 
 @property (nonatomic, strong) CLLocationManager *locationManager;
 @property (nonatomic, strong) CLBeaconRegion *beaconRegion;
+@property (nonatomic, strong) NSMutableArray *services;
 @property (nonatomic, strong) CBPeripheralManager *peripheralManager;
 @property (nonatomic, strong) void (^resolve)(NSNumber* status);
 @property (nonatomic, strong) void (^reject)(NSError *error);
@@ -59,10 +60,12 @@ RCT_EXPORT_METHOD(checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rej
     NSNumber *major = [args objectForKey:@"major"];
     NSNumber *minor = [args objectForKey:@"minor"];
     NSString *identifier = [args objectForKey:@"identifier"];
+    NSArray *services = [args objectForKey:@"services"];
 
-    [self createBeaconRegionWithString:uuid major:major minor:minor identifier:identifier];
     if (!self.peripheralManager)
         self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil options: @{CBPeripheralManagerOptionShowPowerAlertKey: @YES}];
+    [self createBeaconRegionWithString:uuid major:major minor:minor identifier:identifier];
+    [self createServices:services];
     [self turnOnAdvertising];
 }
 
@@ -100,6 +103,33 @@ RCT_EXPORT_METHOD(checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rej
     self.beaconRegion.notifyEntryStateOnDisplay = YES;
 }
 
+- (void)createServices:(NSArray *)services
+{
+    [self.services removeAllObjects];
+    
+    for (NSDictionary* serviceElement in services) {
+        NSString *serviceUUIDString = [serviceElement objectForKey:@"uuid"];
+        CBUUID* serviceUUID = [CBUUID UUIDWithString:serviceUUIDString];
+        CBMutableService* service = [[CBMutableService alloc] initWithType:serviceUUID primary:true];
+
+        NSMutableArray* characteristicsForService = [[NSMutableArray alloc] init];
+        NSArray *characteristics = [serviceElement objectForKey:@"characteristics"];
+        for (NSDictionary* characteristicElement in characteristics) {
+            NSString *characteristicUUIDString = [characteristicElement objectForKey:@"uuid"];
+            CBUUID* characteristicUUID = [CBUUID UUIDWithString:characteristicUUIDString];
+            
+            NSString* characteristicValue = [characteristicElement objectForKey:@"value"];
+            NSData* valueData = [characteristicValue dataUsingEncoding:NSUTF8StringEncoding];
+            CBMutableCharacteristic* characteristic = [[CBMutableCharacteristic alloc] initWithType:characteristicUUID properties:CBCharacteristicPropertyRead value:valueData permissions:CBAttributePermissionsReadable];
+            [characteristicsForService addObject:characteristic];
+        }
+        service.characteristics = characteristicsForService;
+        [self.services addObject:service];
+        [self.peripheralManager addService:service];
+    }
+}
+
+
 - (void)createLocationManager
 {
     if (!self.locationManager) {
@@ -128,9 +158,16 @@ RCT_EXPORT_METHOD(checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rej
                                                                 minor: minor
                                                                 identifier:self.beaconRegion.identifier];
     NSDictionary *beaconPeripheralData = [region peripheralDataWithMeasuredPower:nil];
-    [self.peripheralManager startAdvertising:beaconPeripheralData];
+    [beaconPeripheralData setValue:self.beaconRegion.identifier forKey:CBAdvertisementDataLocalNameKey];
     
-    NSLog(@"Turning on advertising for region: %@.", region);
+    NSMutableArray* servicesUUIDs = [[NSMutableArray alloc] init];
+    for (CBMutableService* service in self.services) {
+        [servicesUUIDs addObject:service.UUID];
+    }
+    [beaconPeripheralData setValue:servicesUUIDs forKey:CBAdvertisementDataServiceUUIDsKey];
+    
+    NSLog(@"Turning on advertising for region: %@ and services: %@", region, self.services);
+    [self.peripheralManager startAdvertising:beaconPeripheralData];
 }
 
 #pragma mark - Beacon advertising delegate methods
@@ -157,10 +194,7 @@ RCT_EXPORT_METHOD(checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rej
         NSLog(@"Peripheral manager is off.");
         return;
     }
-    
     NSLog(@"Peripheral manager is on.");
-    [self turnOnAdvertising];
 }
-
-
+    
 @end

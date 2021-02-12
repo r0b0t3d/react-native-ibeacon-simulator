@@ -3,9 +3,20 @@ export interface StartBeaconArgs {
     major: number
     minor: number
     identifier: string
-    txPower?: number
-    advertiseMode?: number
-    advertiseTxPowerLevel?: number
+    txPower?: number // Android
+    advertiseMode?: number // Android
+    advertiseTxPowerLevel?: number // Android
+    services?: Array<Service> // iOS
+}
+
+export type Service = {
+    uuid: string,
+    characteristics: Array<Characteristics>
+}
+
+export type Characteristics = {
+    uuid: string,
+    value: string
 }
 
 export enum AndroidSupportedStatuses {
