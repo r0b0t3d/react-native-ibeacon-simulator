@@ -57,8 +57,8 @@ RCT_EXPORT_METHOD(checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rej
     NSLog(@"Turning on advertising.");
 
     NSString *uuid = [args objectForKey:@"uuid"];
-    NSNumber *major = [args objectForKey:@"major"];
-    NSNumber *minor = [args objectForKey:@"minor"];
+    double major = [[args objectForKey:@"major"] intValue];
+    double minor = [[args objectForKey:@"minor"] intValue];
     NSString *identifier = [args objectForKey:@"identifier"];
     NSArray *services = [args objectForKey:@"services"];
 
