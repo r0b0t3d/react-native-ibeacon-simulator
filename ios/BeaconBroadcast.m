@@ -54,19 +54,21 @@ RCT_EXPORT_METHOD(checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rej
 
 - (void)_startAdvertisingBeaconWithString:(NSDictionary *)args
 {
-    NSLog(@"Turning on advertising.");
+    @try {
+        NSLog(@"Turning on advertising.");
 
-    NSString *uuid = [args objectForKey:@"uuid"];
-    double major = [[args objectForKey:@"major"] intValue];
-    double minor = [[args objectForKey:@"minor"] intValue];
-    NSString *identifier = [args objectForKey:@"identifier"];
-    NSArray *services = [args objectForKey:@"services"];
+        NSString *uuid = [args objectForKey:@"uuid"];
+        double major = [[args objectForKey:@"major"] intValue];
+        double minor = [[args objectForKey:@"minor"] intValue];
+        NSString *identifier = [args objectForKey:@"identifier"];
+        NSArray *services = [args objectForKey:@"services"];
 
-    if (!self.peripheralManager)
-        self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil options: @{CBPeripheralManagerOptionShowPowerAlertKey: @YES}];
-    [self createBeaconRegionWithString:uuid major:major minor:minor identifier:identifier];
-    [self createServices:services];
-    [self turnOnAdvertising];
+        if (!self.peripheralManager)
+            self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil options: @{CBPeripheralManagerOptionShowPowerAlertKey: @YES}];
+        [self createBeaconRegionWithString:uuid major:major minor:minor identifier:identifier];
+        [self createServices:services];
+        [self turnOnAdvertising];
+    } @catch (NSException *error){}
 }
 
 - (void)_stopAdvertisingBeacon
