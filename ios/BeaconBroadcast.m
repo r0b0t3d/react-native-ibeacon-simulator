@@ -73,8 +73,10 @@ RCT_EXPORT_METHOD(checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rej
 
 - (void)_stopAdvertisingBeacon
 {
-   if ([self.peripheralManager isAdvertising]) {
-        [self.peripheralManager stopAdvertising];
+    if (self.peripheralManager) {
+       [self.peripheralManager stopAdvertising];
+       [self.peripheralManager removeAllServices];
+       [self.services removeAllObjects];
     }
 
    NSLog(@"Turned off advertising.");
