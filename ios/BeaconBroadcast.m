@@ -2,7 +2,6 @@
 
 @interface BeaconBroadcast()
 
-@property (nonatomic, strong) CLLocationManager *locationManager;
 @property (nonatomic, strong) CLBeaconRegion *beaconRegion;
 @property (nonatomic, strong) NSMutableArray *services;
 @property (nonatomic, strong) CBPeripheralManager *peripheralManager;
@@ -73,10 +72,14 @@ RCT_EXPORT_METHOD(checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rej
 
 - (void)_stopAdvertisingBeacon
 {
-    if (self.peripheralManager) {
+   if (self.peripheralManager) {
        [self.peripheralManager stopAdvertising];
        [self.peripheralManager removeAllServices];
        [self.services removeAllObjects];
+       
+       self.services = nil;
+       self.peripheralManager = nil;
+       self.beaconRegion = nil;
     }
 
    NSLog(@"Turned off advertising.");
@@ -130,15 +133,6 @@ RCT_EXPORT_METHOD(checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rej
         service.characteristics = characteristicsForService;
         [self.services addObject:service];
         [self.peripheralManager addService:service];
-    }
-}
-
-
-- (void)createLocationManager
-{
-    if (!self.locationManager) {
-        self.locationManager = [[CLLocationManager alloc] init];
-        self.locationManager.delegate = self;
     }
 }
 
