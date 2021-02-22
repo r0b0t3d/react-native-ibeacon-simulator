@@ -53,7 +53,7 @@ RCT_EXPORT_METHOD(checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rej
 
 - (void)_startAdvertisingBeaconWithString:(NSDictionary *)args
 {
-    @try {
+    @try {        
         NSLog(@"Turning on advertising.");
 
         NSString *uuid = [args objectForKey:@"uuid"];
@@ -76,10 +76,6 @@ RCT_EXPORT_METHOD(checkTransmissionSupported:(RCTPromiseResolveBlock)resolve rej
        [self.peripheralManager stopAdvertising];
        [self.peripheralManager removeAllServices];
        [self.services removeAllObjects];
-       
-       self.services = nil;
-       self.peripheralManager = nil;
-       self.beaconRegion = nil;
     }
 
    NSLog(@"Turned off advertising.");
