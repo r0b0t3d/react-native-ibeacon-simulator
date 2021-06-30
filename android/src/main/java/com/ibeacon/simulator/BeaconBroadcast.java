@@ -133,16 +133,16 @@ public class BeaconBroadcast extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public boolean stopSharedAdvertisingBeacon() {
+    public void stopSharedAdvertisingBeacon(Promise promise) {
         if (beaconTransmitter != null) {
             try {
                 beaconTransmitter.stopAdvertising();
-                return true;
+                promise.resolve(true);
             } catch (Exception ex) {
                 Log.e(TAG, "Error on stop advertising ", ex);
-                return false;
+                promise.resolve(false);
             }
         }
-        return true;
+        promise.resolve(true);
     }
 }
