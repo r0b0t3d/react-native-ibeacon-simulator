@@ -21,7 +21,7 @@ async function startAdvertisingBeaconWithString(args: Types.StartBeaconArgs): Pr
   return NativeBeaconBroadcast.startSharedAdvertisingBeaconWithString(args)
 }
 
-function stopAdvertisingBeacon(): boolean {
+function stopAdvertisingBeacon(): Promise<boolean> {
   return NativeBeaconBroadcast.stopSharedAdvertisingBeacon()
 }
 
