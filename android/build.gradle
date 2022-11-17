@@ -1,10 +1,14 @@
+apply plugin: 'com.android.library'
 
+def safeExtGet(prop, fallback) {
+    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
 
 buildscript {
     repositories {
         mavenLocal()
         google()
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.1.2'
@@ -15,17 +19,16 @@ buildscript {
 repositories {
     mavenLocal()
     google()
-    jcenter()
+    mavenCentral()
 }
 
-apply plugin: 'com.android.library'
-
 android {
-    compileSdkVersion 28
+    compileSdkVersion safeExtGet('compileSdkVersion', 31)
+    buildToolsVersion safeExtGet('buildToolsVersion', '30.0.2')
 
     defaultConfig {
-        minSdkVersion 18
-        targetSdkVersion 28
+        minSdkVersion safeExtGet('minSdkVersion', 21)
+        targetSdkVersion safeExtGet('targetSdkVersion', 28)
         versionCode 1
         versionName "1.0"
     }
@@ -34,7 +37,9 @@ android {
     }
 }
 
+def altBeaconLibrary = safeExtGet('altBeaconLibrary', "2.19")
+
 dependencies {
-    implementation 'com.facebook.react:react-native:0.20.1'
-    implementation 'org.altbeacon:android-beacon-library:2.13.1'
+    implementation 'com.facebook.react:react-native:*'
+    implementation "org.altbeacon:android-beacon-library:${altBeaconLibrary}"
 }
